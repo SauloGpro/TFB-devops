@@ -1,0 +1,47 @@
+version: "3.8"
+
+services:
+  db:
+    image: postgres:15
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-app_db}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  web:
+    build: .
+    depends_on:
+      - db
+    env_file:
+      - .env
+    ports:
+      - "5000:5000"
+    environment:
+      - PYTHONPATH=/app
+    volumes:
+      - ./:/app
+    # En dev queremos que ejecute run.py para tener debug. En prod usaremos la imagen sin mounts.
+    command: python run.py
+
+  jenkins:
+    image: jenkins/jenkins:lts
+    container_name: tfb-jenkins
+    user: root
+    ports:
+      - "8090:8080"
+      - "50000:50000"
+    volumes:
+      - jenkins_home:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+      - .:/app
+
+volumes:
+  pgdata:
+  jenkins_home:
+
+

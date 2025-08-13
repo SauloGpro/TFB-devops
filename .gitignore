@@ -1,0 +1,12 @@
+echo ".venv
+.env
+.venv
+pgdata
+tfb_pgdata
+__pycache__/
+htmlcov/
+*.pyc
+" > .gitignore
+.qodo
+.pytest_cache
+.coverage

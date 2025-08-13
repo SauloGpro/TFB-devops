@@ -1,0 +1,9 @@
+Flask
+SQLAlchemy
+psycopg2-binary
+Flask-SQLAlchemy
+gunicorn
+pytest
+coverage
+flake8
+python-dotenv
