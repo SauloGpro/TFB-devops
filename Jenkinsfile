@@ -10,11 +10,16 @@ pipeline {
     }
 
     stages {
-        stage('Build & Test') {
+        stage('Prep / Info') {
             steps {
                 script {
-                    // Crear .env en el workspace
-                    writeFile file: '.env', text: """
+                    // Info debugging: verificar docker y docker-compose disponibles
+                    sh 'docker --version || true'
+                    sh 'docker-compose --version || true'
+                    sh 'which docker-compose || true'
+                }
+                // crear .env en el workspace
+                writeFile file: '.env', text: """
 FLASK_ENV=${FLASK_ENV}
 SECRET_KEY=${SECRET_KEY}
 POSTGRES_USER=${POSTGRES_USER}
@@ -22,32 +27,39 @@ POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
 POSTGRES_DB=${POSTGRES_DB}
 DATABASE_URI=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
 """
-                }
-
-                // Usar docker compose específico para CI (sin puertos host)
-                sh 'docker compose -f docker-compose.ci.yml down --volumes --remove-orphans || true'
-                sh 'docker compose -f docker-compose.ci.yml build --no-cache'
-                // Levantar solo la DB en background (sin mapear puertos)
-                sh 'docker compose -f docker-compose.ci.yml up -d db'
-                // Ejecutar tests en un contenedor efímero usando la imagen web (depende de db)
-                sh 'docker compose -f docker-compose.ci.yml run --rm web pytest -q'
-
-                // Opcional: construir una imagen final si los tests pasan
-                sh 'docker compose -f docker-compose.ci.yml build web'
             }
         }
 
-        stage('Build Image for Deploy') {
+        stage('Build & Test') {
             steps {
-                // Puedes añadir build/push aquí si quieres
-                echo "Build Image stage (opcional)"
+                script {
+                    // Usamos docker-compose (con guion) para compatibilidad con la imagen Jenkins que tiene docker-compose instalado.
+                    sh 'docker-compose -f docker-compose.ci.yml down --volumes --remove-orphans || true'
+                    sh 'docker-compose -f docker-compose.ci.yml build --no-cache'
+                    sh 'docker-compose -f docker-compose.ci.yml up -d db'
+
+                    // Esperar a que Postgres acepte conexiones (usa pg_isready dentro del contenedor db)
+                    sh '''
+                    set -e
+                    echo "Waiting for Postgres to be ready..."
+                    for i in $(seq 1 30); do
+                      docker-compose -f docker-compose.ci.yml exec -T db pg_isready -U ${POSTGRES_USER} && { echo "Postgres ready"; break; } || true
+                      sleep 1
+                    done
+                    '''
+
+                    // Ejecutar tests: run crea un contenedor temporal a partir de la imagen web
+                    sh 'docker-compose -f docker-compose.ci.yml run --rm web pytest -q'
+                    // Build final de la imagen web si quieres
+                    sh 'docker-compose -f docker-compose.ci.yml build web'
+                }
             }
         }
     }
 
     post {
         always {
-            sh 'docker compose -f docker-compose.ci.yml down --volumes --remove-orphans || true'
+            sh 'docker-compose -f docker-compose.ci.yml down --volumes --remove-orphans || true'
         }
     }
 }
