@@ -29,9 +29,11 @@ services:
     command: python run.py
 
   jenkins:
-    image: jenkins/jenkins:lts
+    build:
+      context: .
+      dockerfile: jenkins.Dockerfile
     container_name: tfb-jenkins
-    user: root
+    user: root        # facilita permisos sobre el socket (solo para entorno local)
     ports:
       - "8090:8080"
       - "50000:50000"

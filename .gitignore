@@ -1,5 +1,4 @@
 echo ".venv
-.env
 .venv
 pgdata
 tfb_pgdata
