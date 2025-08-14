@@ -2,7 +2,6 @@ pipeline {
     agent any
 
     environment {
-        // Aquí podrías usar credenciales de Jenkins si quieres más seguridad
         POSTGRES_USER = 'postgres'
         POSTGRES_PASSWORD = 'postgres'
         POSTGRES_DB = 'app_db'
@@ -14,7 +13,7 @@ pipeline {
         stage('Build & Test') {
             steps {
                 script {
-                    // Crear .env
+                    // Crear .env en el workspace
                     writeFile file: '.env', text: """
 FLASK_ENV=${FLASK_ENV}
 SECRET_KEY=${SECRET_KEY}
@@ -24,22 +23,31 @@ POSTGRES_DB=${POSTGRES_DB}
 DATABASE_URI=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
 """
                 }
-                sh 'docker-compose down --volumes --remove-orphans'
-                sh 'docker-compose up --build -d'
-                sh 'docker exec tfb-web-1 pytest -q'
+
+                // Usar docker compose específico para CI (sin puertos host)
+                sh 'docker compose -f docker-compose.ci.yml down --volumes --remove-orphans || true'
+                sh 'docker compose -f docker-compose.ci.yml build --no-cache'
+                // Levantar solo la DB en background (sin mapear puertos)
+                sh 'docker compose -f docker-compose.ci.yml up -d db'
+                // Ejecutar tests en un contenedor efímero usando la imagen web (depende de db)
+                sh 'docker compose -f docker-compose.ci.yml run --rm web pytest -q'
+
+                // Opcional: construir una imagen final si los tests pasan
+                sh 'docker compose -f docker-compose.ci.yml build web'
             }
         }
 
         stage('Build Image for Deploy') {
             steps {
-                sh 'docker build -t tfb-app .'
+                // Puedes añadir build/push aquí si quieres
+                echo "Build Image stage (opcional)"
             }
         }
     }
 
     post {
         always {
-            sh 'docker-compose down --volumes --remove-orphans || true'
+            sh 'docker compose -f docker-compose.ci.yml down --volumes --remove-orphans || true'
         }
     }
 }

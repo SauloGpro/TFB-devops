@@ -25,15 +25,13 @@ services:
       - PYTHONPATH=/app
     volumes:
       - ./:/app
-    # En dev queremos que ejecute run.py para tener debug. En prod usaremos la imagen sin mounts.
     command: python run.py
 
   jenkins:
     build:
       context: .
       dockerfile: jenkins.Dockerfile
-    container_name: tfb-jenkins
-    user: root        # facilita permisos sobre el socket (solo para entorno local)
+    user: root
     ports:
       - "8090:8080"
       - "50000:50000"
@@ -41,9 +39,9 @@ services:
       - jenkins_home:/var/jenkins_home
       - /var/run/docker.sock:/var/run/docker.sock
       - .:/app
+    profiles:
+      - local   # solo arranca si llamas 'docker compose --profile local up'
 
 volumes:
   pgdata:
   jenkins_home:
-
-
