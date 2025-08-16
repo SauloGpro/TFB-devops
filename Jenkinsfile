@@ -34,7 +34,7 @@ pipeline {
             sleep 1
           done
         '''
-        sh 'docker-compose -f docker-compose.ci.yml run --rm web pytest -q'
+        sh 'docker-compose -f docker-compose.ci.yml run --rm -e PYTHONPATH=/app -w /app web pytest -q'
       }
       post {
         always {
