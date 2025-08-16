@@ -49,7 +49,7 @@ DATABASE_URI=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGR
                     '''
 
                     // Ejecutar tests: run crea un contenedor temporal a partir de la imagen web
-                    sh 'docker-compose -f docker-compose.ci.yml run --rm web pytest -q'
+                    sh 'docker-compose -f docker-compose.ci.yml run --rm -e PYTHONPATH=/app -w /app web pytest -q'
                     // Build final de la imagen web si quieres
                     sh 'docker-compose -f docker-compose.ci.yml build web'
                 }
