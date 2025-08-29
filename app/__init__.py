@@ -9,6 +9,7 @@ load_dotenv()
 
 db = SQLAlchemy()
 
+
 def create_app(env_name: str = "development"):
     """Factory to create Flask app."""
     app = Flask(__name__)
@@ -16,7 +17,10 @@ def create_app(env_name: str = "development"):
     # Cargamos configuración por defecto desde tus clases en app/config.py
     # (config_dict debería existir en app/config.py tal y como lo tienes)
     from app.config import config_dict
-    app.config.from_object(config_dict.get(env_name, config_dict["development"]))
+
+    # usamos from_object en dos pasos para no superar longitud de línea
+    config_obj = config_dict.get(env_name, config_dict["development"])
+    app.config.from_object(config_obj)
 
     # Si hay DATABASE_URI en las variables de entorno, la usamos (override)
     database_uri = os.getenv("DATABASE_URI")

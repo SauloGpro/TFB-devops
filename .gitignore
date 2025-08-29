@@ -9,3 +9,8 @@ htmlcov/
 .qodo
 .pytest_cache
 .coverage
+*.tfvars
+*.tfstate*
+*.pem
+.ssh/*.pem
+.env

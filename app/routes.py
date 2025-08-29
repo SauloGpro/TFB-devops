@@ -1,3 +1,4 @@
+# app/routes.py
 from flask import Blueprint, request, jsonify
 from app.models import Data
 from app import db
@@ -21,7 +22,10 @@ def insert_data():
 
 @data_routes.route("/data", methods=["GET"])
 def get_all_data():
-    data_list = [{"id": data.id, "name": data.name} for data in Data.query.all()]
+    data_list = [
+        {"id": d.id, "name": d.name}
+        for d in Data.query.all()
+    ]
     return jsonify(data_list)
 
 
