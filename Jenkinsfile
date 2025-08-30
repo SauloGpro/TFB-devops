@@ -3,8 +3,7 @@ pipeline {
 
   environment {
     REGISTRY = "docker.io"
-    IMAGE_NAME = "saulgpro/tfb-devops"   // ya está correcto y en minúsculas
-    // NO calculamos IMAGE_TAG aquí: lo haremos dentro de 'Build Image for Deploy'
+    IMAGE_NAME = "saulgpro/tfb-devops"   
   }
 
   stages {

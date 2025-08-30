@@ -199,6 +199,8 @@ source .venv/bin/activate
 # .\.venv\Scripts\Activate.ps1
 
 pip install -r requirements.txt
+pip install --upgrade pip setuptools wheel 
+pip install -e .
 pytest -q
 
 Coverage
